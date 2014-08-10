@@ -37,6 +37,7 @@ if (navigator.mozGetUserMedia) {
 
   // Fake get{Video,Audio}Tracks
   MediaStream.prototype.getVideoTracks = function() {
+      console.log("Fake get{Video,Audio}Tracks");
     return [];
   };
 
@@ -58,10 +59,12 @@ if (navigator.mozGetUserMedia) {
   // Attach a media stream to an element.
   attachMediaStream = function(element, stream) {
     element.src = webkitURL.createObjectURL(stream);
+      console.log("Attached media stream");
   };
 
   reattachMediaStream = function(to, from) {
     to.src = from.src;
+      console.log("Reattached media stream");
   };
 
   // The representation of tracks in a stream is changed in M26.

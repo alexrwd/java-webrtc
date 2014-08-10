@@ -31,18 +31,28 @@
     -webkit-transform-style: preserve-3d;
   }
   #local {
-    position: absolute;
-    width: 100%;
+    /*position: absolute;*/
+    width: 50%;
+      float: left;
     -webkit-transform: scale(-1, 1);
     -webkit-backface-visibility: hidden;
   }
+
   #remote {
-    position: absolute;
-    width: 100%;
+      /*position: absolute;*/
+      width: 50%;
+      float: right;
+      -webkit-transform: scale(-1, 1);
+      -webkit-backface-visibility: hidden;
+  }
+  /*#remote {
+    //position: absolute;
+    width: 50%;
+      float: right;
     -webkit-transform: rotateY(180deg);
     -webkit-backface-visibility: hidden;
-  }
-  #mini {
+  }*/
+  /*#mini {
     position: absolute;
     height: 30%;
     width: 30%;
@@ -50,22 +60,22 @@
     right: 4px;
     -webkit-transform: scale(-1, 1);
     opacity: 1.0;
-  }
+  }*/
   #localVideo {
-    opacity: 0;
+    opacity: 1;
     -webkit-transition-property: opacity;
     -webkit-transition-duration: 2s;
   }
   #remoteVideo {
-    opacity: 0;
+    opacity: 1;
     -webkit-transition-property: opacity;
     -webkit-transition-duration: 2s;
   }
-  #miniVideo {
+  /*#miniVideo {
     opacity: 0;
     -webkit-transition-property: opacity;
     -webkit-transition-duration: 2s;
-  }
+  }*/
   #footer {
     spacing: 4px;
     position: absolute;
@@ -103,7 +113,8 @@
 <script type="text/javascript">
 // <![CDATA[
   var localVideo;
-  var miniVideo;
+//  var miniVideo;
+var footer;
   var remoteVideo;
   var localStream;
   var remoteStream;
@@ -124,8 +135,9 @@
     console.log("Initializing; room=${room_key}.");
     card = document.getElementById("card");
     localVideo = document.getElementById("localVideo");
-    miniVideo = document.getElementById("miniVideo");
+//    miniVideo = document.getElementById("miniVideo");
     remoteVideo = document.getElementById("remoteVideo");
+      footer = document.getElementById("footer");
     resetStatus();
     openChannel();
     doGetUserMedia();
@@ -138,7 +150,7 @@
     channel.onopen    = onChannelOpened;
     channel.onmessage = onChannelMessage;
     channel.onclose   = onChannelClosed;
-    channel.onerror   = onChannelError;
+    channel.onerror   = function(evt) { onChannelError(evt) };
   }
 
   function resetStatus() {
@@ -167,12 +179,69 @@
     var pc_config = "${pc_config}";
     var pc_constraints = ${pc_constraints};
     // Force the use of a number IP STUN server for Firefox.
-    if (webrtcDetectedBrowser == "firefox") {
+    /*if (webrtcDetectedBrowser == "firefox") {
       pc_config = {"iceServers":[{"url":"stun:23.21.150.121"}]};
-    }
+    }*/
+
+//      pc_config = {"iceServers":[{"url":"stun:23.21.150.121"}]};
+
+      /*var isChrome = !!navigator.webkitGetUserMedia;
+
+      var STUN = {
+          url: isChrome
+                  ? 'stun:stun.l.google.com:19302'
+                  : 'stun:23.21.150.121'
+      };
+
+      var TURN = {
+          url: 'turn:numb.viagenie.ca',
+          credential: 'muazkh',
+          username: 'webrtc@live.com'
+      };
+
+      var pc_config = {
+          iceServers: [STUN, TURN]
+      };*/
+
+      pc_config = {
+          'iceServers': [
+          {
+              'url': 'stun:stun.l.google.com:19302'
+          },
+          {
+              'url': 'turn:192.158.29.39:3478?transport=udp',
+              'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+              'username': '28224511:1379330808'
+          },
+          {
+              'url': 'turn:192.158.29.39:3478?transport=tcp',
+              'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+              'username': '28224511:1379330808'
+          }
+      ]
+      }
+
+      /*var pc_config= {
+          'iceServers': [
+              {
+                  'url': 'stun:stun.l.google.com:19302'
+              },
+              {
+                  'url': 'turn:192.158.29.39:3478?transport=udp',
+                  'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                  'username': '28224511:1379330808'
+              },
+              {
+                  'url': 'turn:192.158.29.39:3478?transport=tcp',
+                  'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                  'username': '28224511:1379330808'
+              }
+          ]
+      }*/
     try {
       // Create an RTCPeerConnection via the polyfill (adapter.js).
-      pc = new RTCPeerConnection(pc_config, pc_constraints);
+//      pc = new RTCPeerConnection(pc_config, pc_constraints);
+        pc = new RTCPeerConnection(pc_config);
       pc.onicecandidate = onIceCandidate;
       console.log("Created RTCPeerConnnection with:\n" +
                   "  config: \"" + JSON.stringify(pc_config) + "\";\n" +
@@ -196,8 +265,10 @@
       pc.addStream(localStream);
       started = true;
       // Caller initiates offer to peer.
-      if (initiator)
-        doCall();
+      if (initiator) {
+          console.log("Initiator");
+          doCall();
+      }
     }
   }
 
@@ -218,12 +289,16 @@
     constraints = mergeConstraints(constraints, sdpConstraints);
     console.log("Sending offer to peer, with constraints: \n" +
                 "  \"" + JSON.stringify(constraints) + "\".")
-    pc.createOffer(setLocalAndSendMessage, null, constraints);
+    pc.createOffer(setLocalAndSendMessage, function(error) {
+        alert(error);
+    }, constraints);
   }
 
   function doAnswer() {
     console.log("Sending answer to peer.");
-    pc.createAnswer(setLocalAndSendMessage, null, sdpConstraints);
+    pc.createAnswer(setLocalAndSendMessage, function(error) {
+        alert(error);
+    }, sdpConstraints);
   }
 
   function mergeConstraints(cons1, cons2) {
@@ -245,6 +320,10 @@
   function sendMessage(message) {
     var msgString = JSON.stringify(message);
     console.log('C->S: ' + msgString);
+    //${server_name}
+    //var token = ${token};
+    //channel.send("token:${token}");
+
     path = '/${PATH}/message?r=${room_key}' + '&u=${me}';
     var xhr = new XMLHttpRequest();
     xhr.open('POST', path, true);
@@ -258,10 +337,22 @@
       // Callee creates PeerConnection
       if (!initiator && !started)
         maybeStart();
+      console.log("Set remote descriptor: " + msg);
+      /*pc.setRemoteDescription(new RTCSessionDescription(msg));
+      doAnswer();*/
 
-      pc.setRemoteDescription(new RTCSessionDescription(msg));
-      doAnswer();
+        pc.setRemoteDescription(new RTCSessionDescription(msg), function() {
+            pc.createAnswer(function(answer) {
+                pc.setLocalDescription(answer, function() {
+                    console.log("Answer: " + answer);
+                    sendMessage(answer);
+                }, function(error) {
+                    alert(error);
+                }, sdpConstraints);
+            })
+        });
     } else if (msg.type === 'answer' && started) {
+        console.log("Set remote descriptor as answer: " + msg)
       pc.setRemoteDescription(new RTCSessionDescription(msg));
     } else if (msg.type === 'candidate' && started) {
       var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label,
@@ -275,14 +366,18 @@
   function onChannelOpened() {
     console.log('Channel opened.');
     channelReady = true;
-    if (initiator) maybeStart();
+    if (initiator) {
+        maybeStart();
+    }
+    channel.send("token:${token}");
   }
   function onChannelMessage(message) {
     console.log('S->C: ' + message.data);
     processSignalingMessage(message.data);
   }
-  function onChannelError() {
+  function onChannelError(evt) {
     console.log('Channel error.');
+    console.log(evt.data);
   }
   function onChannelClosed() {
     console.log('Channel closed.');
@@ -310,16 +405,18 @@
                    id: event.candidate.sdpMid,
                    candidate: event.candidate.candidate});
     } else {
-      console.log("End of candidates.");
+      console.log("End of candidates." + event);
     }
   }
 
   function onRemoteStreamAdded(event) {
     console.log("Remote stream added.");
-    reattachMediaStream(miniVideo, localVideo);
+      //transitionToActive();
+      remoteVideo.src = URL.createObjectURL(event.stream);
+    /*reattachMediaStream(miniVideo, localVideo);
     attachMediaStream(remoteVideo, event.stream);
     remoteStream = event.stream;
-    waitForRemoteVideo();
+    waitForRemoteVideo();*/
   }
   function onRemoteStreamRemoved(event) {
     console.log("Remote stream removed.");
@@ -350,7 +447,9 @@
 
   function waitForRemoteVideo() {
     // Call the getVideoTracks method via adapter.js.
+      console.log("Going to wait for remote video");
     videoTracks = remoteStream.getVideoTracks();
+      transitionToActive();
     if (videoTracks.length === 0 || remoteVideo.currentTime > 0) {
       transitionToActive();
     } else {
@@ -361,23 +460,23 @@
     remoteVideo.style.opacity = 1;
     card.style.webkitTransform = "rotateY(180deg)";
     setTimeout(function() { localVideo.src = ""; }, 500);
-    setTimeout(function() { miniVideo.style.opacity = 1; }, 1000);
+//    setTimeout(function() { miniVideo.style.opacity = 1; }, 1000);
     setStatus("<input type=\"button\" id=\"hangup\" value=\"Hang up\" onclick=\"onHangup()\" />");
   }
   function transitionToWaiting() {
     card.style.webkitTransform = "rotateY(0deg)";
-    setTimeout(function() {
+    /*setTimeout(function() {
                  localVideo.src = miniVideo.src;
                  miniVideo.src = "";
                  remoteVideo.src = "" }, 500);
-    miniVideo.style.opacity = 0;
+    miniVideo.style.opacity = 0*/;
     remoteVideo.style.opacity = 0;
     resetStatus();
   }
   function transitionToDone() {
     localVideo.style.opacity = 0;
     remoteVideo.style.opacity = 0;
-    miniVideo.style.opacity = 0;
+//    `Video.style.opacity = 0;
     setStatus("You have left the call. <a href=\"${room_link}\">Click here</a> to rejoin.");
   }
   function enterFullScreen() {
@@ -454,14 +553,14 @@
         return false;
       }
     } else {
-      if (event.ctrlKey && event.keyCode === 68) {
+      /*if (event.ctrlKey && event.keyCode === 68) {
         toggleAudioMute();
         return false;
       }
       if (event.ctrlKey && event.keyCode === 69) {
         toggleVideoMute();
         return false;
-      }
+      }*/
     }
   }
 
@@ -544,9 +643,9 @@
         </div>
         <div id="remote">
             <video width="100%" height="100%" id="remoteVideo" autoplay />
-            <div id="mini">
+            <!--<div id="mini">
                 <video width="100%" height="100%" id="miniVideo" autoplay />
-            </div>
+            </div>-->
         </div>
     </div>
     <div id="footer">

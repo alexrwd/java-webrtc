@@ -37,9 +37,13 @@ public class MessagePageServlet extends HttpServlet {
                 if (other_user.equals(user)) {
                     message = message.replace("\"offer\"", "\"answer\"");
                     message = message.replace("a=crypto:0 AES_CM_128_HMAC_SHA1_32", "a=xrypto:0 AES_CM_128_HMAC_SHA1_32");
+                } else {
+                    logger.info("User are identical for message: " + message);
                 }
                 SignalingWebSocket.send(room.getUserToken(other_user), message);
                 logger.info("Delivered message to user " + other_user);
+            } else {
+                logger.info("Other user is empty: " + message);
             }
         } else {
             logger.log(Level.WARNING, "Unknown room " + room_key);
