@@ -121,7 +121,6 @@ var footer;
   var channel;
   var channelReady = false;
   var pc;
-  var socket;
   var initiator = ${initiator};
   var started = false;
   // Set up audio and video regardless of what devices are present.
@@ -203,22 +202,24 @@ var footer;
           iceServers: [STUN, TURN]
       };*/
 
+//      pc_config={"iceServers":[{"url":"stun:stun.l.google.com:19302"}]};
+//      pc_config = {"iceServers":[{"url":"stun:23.21.150.121"}]};
       pc_config = {
           'iceServers': [
-          {
-              'url': 'stun:stun.l.google.com:19302'
-          },
-          {
-              'url': 'turn:192.158.29.39:3478?transport=udp',
-              'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-              'username': '28224511:1379330808'
-          },
-          {
-              'url': 'turn:192.158.29.39:3478?transport=tcp',
-              'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-              'username': '28224511:1379330808'
-          }
-      ]
+              {
+                  'url': 'stun:stun.l.google.com:19302'
+              },
+              {
+                  'url': 'turn:192.158.29.39:3478?transport=udp',
+                  'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                  'username': '28224511:1379330808'
+              },
+              {
+                  'url': 'turn:192.158.29.39:3478?transport=tcp',
+                  'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                  'username': '28224511:1379330808'
+              }
+          ]
       }
 
       /*var pc_config= {
@@ -344,16 +345,18 @@ var footer;
         pc.setRemoteDescription(new RTCSessionDescription(msg), function() {
             pc.createAnswer(function(answer) {
                 pc.setLocalDescription(answer, function() {
-                    console.log("Answer: " + answer);
-                    sendMessage(answer);
-                }, function(error) {
+                        console.log("Answer: " + answer);
+                        sendMessage(answer);
+                    }, function(error) {
                     alert(error);
                 }, sdpConstraints);
-            })
+            }, logError)
         });
+//        pc.addStream(localStream);
     } else if (msg.type === 'answer' && started) {
         console.log("Set remote descriptor as answer: " + msg)
       pc.setRemoteDescription(new RTCSessionDescription(msg));
+//        pc.addStream(localStream);
     } else if (msg.type === 'candidate' && started) {
       var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label,
                                            candidate:msg.candidate});
@@ -361,6 +364,10 @@ var footer;
     } else if (msg.type === 'bye' && started) {
       onRemoteHangup();
     }
+  }
+
+  function logError(error) {
+    console.log(error.name + ": " + error.message);
   }
 
   function onChannelOpened() {
@@ -413,6 +420,7 @@ var footer;
     console.log("Remote stream added.");
       //transitionToActive();
       remoteVideo.src = URL.createObjectURL(event.stream);
+      setStatus("<input type=\"button\" id=\"hangup\" value=\"Hang up\" onclick=\"onHangup()\" />");
     /*reattachMediaStream(miniVideo, localVideo);
     attachMediaStream(remoteVideo, event.stream);
     remoteStream = event.stream;
@@ -427,7 +435,7 @@ var footer;
     transitionToDone();
     stop();
     // will trigger BYE from server
-    socket.close();
+    channel.close();
   }
 
   function onRemoteHangup() {
@@ -536,7 +544,7 @@ var footer;
   // Send BYE on refreshing(or leaving) a demo page
   // to ensure the room is cleaned for next session.
   window.onbeforeunload = function() {
-    sendMessage({type: 'bye'});
+    sendMessage({type: "bye"});
   }
 
   // Ctrl-D: toggle audio mute; Ctrl-E: toggle video mute.

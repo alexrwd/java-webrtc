@@ -39,7 +39,7 @@ public final class ChatService implements Serializable {
                 room.removeUser(user);
                 logger.info("Room " + key + " has state " + room.toString());
                 if (other != null) {
-                    SignalingWebSocket.send(room.getUserToken(other), "{'type':'bye'}");
+                    SignalingWebSocket.send(room.getUserToken(other), "{\"type\":\"bye\"}");
                     logger.info("Sent BYE to " + other);
                 } else {
                     ChatService.deleteRoom(room);
